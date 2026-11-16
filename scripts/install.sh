@@ -6,6 +6,12 @@ cd "$ROOT_DIR"
 
 say() { printf '%s\n' "$*"; }
 
+install_skill() {
+  if [ -x ./scripts/install-skill.sh ]; then
+    ./scripts/install-skill.sh || say "Skill install skipped; run ./scripts/install-skill.sh later."
+  fi
+}
+
 if [ ! -f .env ]; then
   cp .env.example .env
   SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))" 2>/dev/null || true)
@@ -31,6 +37,7 @@ if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; 
     if curl -fsS http://127.0.0.1:8000/healthz >/dev/null 2>&1; then
       say "Ready: http://127.0.0.1:8000"
       say "Demo login: teacher@demo.local / Demo2026!"
+      install_skill
       exit 0
     fi
     sleep 1
@@ -73,3 +80,4 @@ sleep 2
 say "Ready: http://127.0.0.1:8000"
 say "Demo login: teacher@demo.local / Demo2026!"
 say "Logs: server.log and worker.log"
+install_skill

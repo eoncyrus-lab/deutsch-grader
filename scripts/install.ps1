@@ -17,6 +17,10 @@ if ($docker) {
       Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8000/healthz" | Out-Null
       Write-Host "Ready: http://127.0.0.1:8000"
       Write-Host "Demo login: teacher@demo.local / Demo2026!"
+      $skillTarget = Join-Path $HOME ".agents\skills\deutsch-grader"
+      New-Item -ItemType Directory -Force -Path $skillTarget | Out-Null
+      Copy-Item -Recurse -Force ".\.agents\skills\deutsch-grader\*" $skillTarget
+      Write-Host "Cindy Skill installed: $skillTarget"
       exit 0
     } catch {
       Start-Sleep -Seconds 1
@@ -46,3 +50,7 @@ Start-Process -FilePath ".venv\Scripts\grading-worker.exe" -RedirectStandardOutp
 Start-Sleep -Seconds 2
 Write-Host "Ready: http://127.0.0.1:8000"
 Write-Host "Demo login: teacher@demo.local / Demo2026!"
+$skillTarget = Join-Path $HOME ".agents\skills\deutsch-grader"
+New-Item -ItemType Directory -Force -Path $skillTarget | Out-Null
+Copy-Item -Recurse -Force ".\.agents\skills\deutsch-grader\*" $skillTarget
+Write-Host "Cindy Skill installed: $skillTarget"

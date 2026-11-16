@@ -41,7 +41,7 @@ Windows PowerShell：
 .\scripts\install.ps1
 ~~~
 
-脚本会自动创建 .env、生成会话密钥、下载依赖、构建/启动容器，或者在 Docker 不可用时创建本机 Python 环境。不要手工跳过依赖安装。
+脚本会自动创建 .env、生成会话密钥、下载依赖、构建/启动容器，或者在 Docker 不可用时创建本机 Python 环境，并在可用时自动把 Cindy Skill 复制到 ~/.agents/skills/deutsch-grader。不要手工跳过依赖安装。
 
 验证：
 

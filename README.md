@@ -18,7 +18,7 @@ cd deutsch-grader
 ./scripts/install.sh
 ~~~
 
-脚本会自动下载依赖、初始化演示数据、启动 Web 和 worker，并等待健康检查通过。Windows 用 scripts/install.ps1。完整步骤见 [部署指南](docs/deploy.md)；其他 AI Agent 按 [安装与交付说明](docs/AGENT-INSTALL.md) 执行。
+脚本会自动下载依赖、初始化演示数据、启动 Web 和 worker，并等待健康检查通过；同时会尝试把 Cindy Skill 安装到 ~/.agents/skills/deutsch-grader。Windows 用 scripts/install.ps1。完整步骤见 [部署指南](docs/deploy.md)；其他 AI Agent 按 [安装与交付说明](docs/AGENT-INSTALL.md) 执行。
 
 开发模式手动启动：
 
