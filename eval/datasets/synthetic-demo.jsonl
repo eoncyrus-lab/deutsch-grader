@@ -1,0 +1,4 @@
+{"id":"syn-01","synthetic":true,"reference_score":9.5,"predicted":9.5,"errors":[{"sid":2,"original":"habe"}],"predicted_errors":[{"sid":2,"original":"habe"}],"runs":[9.5,9.5,9.5],"guard_violations":0}
+{"id":"syn-02","synthetic":true,"reference_score":4.0,"predicted":4.0,"errors":[{"sid":1,"original":"habe"},{"sid":2,"original":"im Museum"}],"predicted_errors":[{"sid":1,"original":"habe"},{"sid":2,"original":"im Museum"}],"runs":[4.0,4.0,4.5],"guard_violations":0}
+{"id":"syn-03","synthetic":true,"reference_score":7.5,"predicted":7.0,"errors":[{"sid":3,"original":"am den"}],"predicted_errors":[{"sid":3,"original":"am den"}],"runs":[7.0,7.0,7.0],"guard_violations":0}
+{"id":"syn-04","synthetic":true,"reference_score":8.5,"predicted":8.5,"errors":[],"predicted_errors":[],"runs":[8.5,8.5,8.5],"guard_violations":0}

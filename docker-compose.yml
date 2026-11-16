@@ -1,0 +1,15 @@
+services:
+  deutsch-grader:
+    build: .
+    container_name: deutsch-grader
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DG_DB_PATH: /data/app.db
+      DG_STORAGE_DIR: /data/objects
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

@@ -1,0 +1,12 @@
+{
+  "title": "Meine Reise",
+  "lines": [
+    {"n": 1, "text": "Ich habe nach Berlin gefahren."},
+    {"n": 2, "text": "Wir haben im Museum gegangen."},
+    {"n": 3, "text": "Danach haben wir Pizza gegessen."},
+    {"n": 4, "text": "Es war toll."},
+    {"n": 5, "text": "Ich möchte wieder fahren."}
+  ],
+  "illegible": [],
+  "redactions": 0
+}

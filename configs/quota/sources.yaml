@@ -1,0 +1,39 @@
+# Token packs are consumed first; pay-as-you-go is the bounded fallback.
+# The fixture source is used only when DG_FIXTURE_MODE=1.
+stage_sources:
+  default: [pack-a, payg]
+  fixture: [fixture]
+
+sources:
+  pack-a:
+    provider: openai
+    unit: token
+    total_units: 5000000
+    window_seconds: 2592000
+    concurrency: 2
+    rate_per_minute: 60
+    terms_ok: true
+    fallback_order: 10
+    price_per_1k: 0
+  payg:
+    provider: openai
+    unit: token
+    total_units: 2000000
+    window_seconds: 2592000
+    concurrency: 1
+    rate_per_minute: 30
+    terms_ok: true
+    fallback_order: 100
+    pay_as_you_go: true
+    monthly_budget: 200
+    price_per_1k: 0.02
+  fixture:
+    provider: fixture
+    unit: call
+    total_units: 1000000
+    window_seconds: 31536000
+    concurrency: 4
+    rate_per_minute: 600
+    terms_ok: true
+    fallback_order: 1
+    price_per_1k: 0

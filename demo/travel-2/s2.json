@@ -1,0 +1,28 @@
+{
+  "errors": [
+    {
+      "sid": 1,
+      "original": "habe",
+      "corrected": "bin",
+      "span": [4, 8],
+      "type": "助动词",
+      "code": "AUX_MOVE",
+      "pattern": "aux:sein+fahren",
+      "certainty": "确定",
+      "rule": "fahren 表示位移，完成时用 sein",
+      "minimal_edit": true
+    },
+    {
+      "sid": 2,
+      "original": "im Museum",
+      "corrected": "ins Museum",
+      "span": [11, 20],
+      "type": "格",
+      "code": "CASE_PREP",
+      "pattern": "prep:in+Akk",
+      "certainty": "确定",
+      "rule": "gehen 表示方向时用第四格，in + das Museum 缩合为 ins Museum",
+      "minimal_edit": true
+    }
+  ]
+}

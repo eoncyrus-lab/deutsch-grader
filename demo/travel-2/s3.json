@@ -1,0 +1,27 @@
+{
+  "fields": {
+    "on_topic": {"value": true, "evidence": "Meine Reise"},
+    "time": {"value": false, "evidence": ""},
+    "place": {"value": true, "evidence": "Berlin"},
+    "companions": {"value": true, "evidence": "Wir"},
+    "activities": {"value": [
+      {"text": "Pizza gegessen", "sid": 3},
+      {"text": "im Museum gegangen", "sid": 2}
+    ], "evidence": "Pizza gegessen"},
+    "concrete_detail": {"value": false, "evidence": ""},
+    "feeling_or_reason": {"value": true, "evidence": "toll"},
+    "sequence_markers": {"value": ["Danach"], "evidence": "Danach"},
+    "chronological": {"value": true, "evidence": "Danach"},
+    "ending_states_best": {"value": false, "evidence": ""},
+    "ending_has_reason": {"value": false, "evidence": ""},
+    "ending_repeats_opening": {"value": false, "evidence": ""},
+    "contradiction": {"value": false, "evidence": ""}
+  },
+  "sentences": [
+    {"sid": 1, "comprehensible": true},
+    {"sid": 2, "comprehensible": true},
+    {"sid": 3, "comprehensible": true},
+    {"sid": 4, "comprehensible": true},
+    {"sid": 5, "comprehensible": true}
+  ]
+}

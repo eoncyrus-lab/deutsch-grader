@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>德语作文批改台</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <section id="login" class="login hidden">
+    <form id="login-form" class="login-card">
+      <div class="brand">D</div>
+      <h1>德语作文批改台</h1>
+      <p class="muted">教师确认转写，模型只找错，代码计分。</p>
+      <label>邮箱<input name="email" type="email" autocomplete="username" value="teacher@demo.local" required></label>
+      <label>密码<input name="password" type="password" autocomplete="current-password" value="Demo2026!" required></label>
+      <button type="submit" class="primary">登录</button>
+      <p id="login-error" class="error"></p>
+      <p class="hint">演示账号：teacher@demo.local / Demo2026!</p>
+    </form>
+  </section>
+
+  <div id="app" class="app hidden">
+    <header class="topbar">
+      <div class="topbar-left"><span class="mark">D</span><strong>德语作文批改台</strong><span class="muted small">A2 · 叙事题</span></div>
+      <div class="topbar-right">
+        <button id="metrics-btn" class="ghost hidden">质量看板</button>
+        <span id="user-name" class="muted small"></span>
+        <button id="logout-btn" class="ghost">退出</button>
+      </div>
+    </header>
+    <main class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-head"><span>作业</span><span><button id="new-btn" class="ghost small">新建</button><button id="refresh-btn" class="ghost small">刷新</button></span></div>
+        <div id="submission-list" class="submission-list"></div>
+        <div class="sidebar-note">离线演示使用固定样例；真实运行需配置模型与额度来源。</div>
+      </aside>
+      <section id="content" class="content">
+        <div class="empty">选择一份作业开始</div>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

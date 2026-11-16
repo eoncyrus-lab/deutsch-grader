@@ -1,0 +1,6 @@
+{
+  "verdicts": [
+    {"error_id": "e1", "verdict": "通过", "alt_corrected": null, "reason": "sein 与 fahren 搭配正确", "checks": {"A": true, "B": true, "C": true, "D": true}},
+    {"error_id": "e2", "verdict": "通过", "alt_corrected": null, "reason": "ins Museum 表示方向，正确", "checks": {"A": true, "B": true, "C": true, "D": true}}
+  ]
+}

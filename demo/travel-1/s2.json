@@ -1,0 +1,28 @@
+{
+  "errors": [
+    {
+      "sid": 2,
+      "original": "habe",
+      "corrected": "bin",
+      "span": [4, 8],
+      "type": "助动词",
+      "code": "AUX_MOVE",
+      "pattern": "aux:sein+fahren",
+      "certainty": "确定",
+      "rule": "fahren 表示位移，完成时用 sein",
+      "minimal_edit": true
+    },
+    {
+      "sid": 3,
+      "original": "am den Strand",
+      "corrected": "am Strand",
+      "span": [17, 30],
+      "type": "格",
+      "code": "CASE_PREP",
+      "pattern": "prep:an+Dat",
+      "certainty": "确定",
+      "rule": "an 表示地点时支配第三格，dem Strand 缩合为 am Strand",
+      "minimal_edit": true
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "fields": {
+    "on_topic": {"value": true, "evidence": "Meine beste Reise"},
+    "time": {"value": true, "evidence": "im Sommer"},
+    "place": {"value": true, "evidence": "Qingdao"},
+    "companions": {"value": true, "evidence": "mit meiner Familie"},
+    "activities": {"value": [
+      {"text": "am den Strand gespielt", "sid": 3},
+      {"text": "Fisch gegessen", "sid": 4},
+      {"text": "Sonnenuntergang gesehen", "sid": 6}
+    ], "evidence": "am den Strand gespielt"},
+    "concrete_detail": {"value": true, "evidence": "Sonnenuntergang gesehen"},
+    "feeling_or_reason": {"value": true, "evidence": "wunderschön"},
+    "sequence_markers": {"value": ["Zuerst", "Danach"], "evidence": ["Zuerst", "Danach"]},
+    "chronological": {"value": true, "evidence": "Danach"},
+    "ending_states_best": {"value": true, "evidence": "meine beste Reise"},
+    "ending_has_reason": {"value": true, "evidence": "weil ich mit meiner Familie zusammen war"},
+    "ending_repeats_opening": {"value": false, "evidence": ""},
+    "contradiction": {"value": false, "evidence": ""}
+  },
+  "sentences": [
+    {"sid": 1, "comprehensible": true},
+    {"sid": 2, "comprehensible": true},
+    {"sid": 3, "comprehensible": true},
+    {"sid": 4, "comprehensible": true},
+    {"sid": 5, "comprehensible": true},
+    {"sid": 6, "comprehensible": true},
+    {"sid": 7, "comprehensible": true},
+    {"sid": 8, "comprehensible": true}
+  ]
+}
