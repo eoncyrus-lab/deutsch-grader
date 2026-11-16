@@ -33,6 +33,10 @@ function toast(message, bad) {
   toast.timer = setTimeout(function () { el.classList.add("hidden"); }, 3600);
 }
 
+document.addEventListener("dg-tts-warning", function (event) {
+  toast(event.detail || "语音朗读不可用", true);
+});
+
 async function api(path, options) {
   options = options || {};
   var opts = { credentials: "same-origin", method: options.method || "GET", headers: options.headers || {} };
@@ -386,8 +390,15 @@ async function submitConfirm(event, d) {
 function transcriptCard(d) {
   if (!d.transcript) return "";
   var body = (d.transcript.title ? d.transcript.title + "\n" : "") + d.transcript.lines.map(function (line) { return line.text; }).join("\n");
+  var sentences = d.sentences || [];
+  var all = sentences.map(function (sentence) { return sentence.text; }).join(" ");
+  var rows = sentences.map(function (sentence) {
+    return '<div class="sentence-row"><span class="muted small">' + esc(sentence.sid) + "</span><span>" + esc(sentence.text) +
+      '</span><button class="speak small" data-speak="' + esc(sentence.text) + '" title="朗读这句德语">🔊</button></div>';
+  }).join("");
+  var actions = all ? '<div class="actions"><button class="speak small" data-speak="' + esc(all) + '">🔊 朗读全文</button></div>' : "";
   return '<details class="card"><summary><strong>转写稿</strong> <span class="muted small">版本 ' + d.transcript.version + " · " + d.word_count + " 词</span></summary>" +
-    '<div class="transcript">' + esc(body) + "</div></details>";
+    actions + (rows || '<div class="transcript">' + esc(body) + "</div>") + "</details>";
 }
 
 function errorsCard(d) {
@@ -403,6 +414,7 @@ function errorsCard(d) {
       '<div class="small">' + esc(e.rule) + "</div>" +
       (e.review_reason ? '<div class="small muted">复核：' + esc(e.review_reason) + "</div>" : "") +
       '<div class="actions">' +
+      '<button class="small speak" data-speak="' + esc(e.corrected) + '">🔊 读正确表达</button>' +
       '<button class="small" data-action="confirm" data-id="' + esc(e.id) + '">确认</button>' +
       '<button class="small" data-action="reject" data-id="' + esc(e.id) + '">AI 改错</button>' +
       '<button class="small" data-action="over_edit" data-id="' + esc(e.id) + '">改法过度</button>' +
@@ -516,7 +528,8 @@ function commentsCard(d) {
   var c = d.comments || {};
   return '<div class="card"><div class="card-head"><h2>评语</h2>' + (c.fallback ? '<span class="pill warn">兜底文案</span>' : "") + "</div>" +
     "<p>" + esc(c.content_comment || "—") + "</p><p>" + esc(c.structure_comment || "—") + "</p>" +
-    '<p class="muted">' + esc(c.language_summary || "—") + "</p><p><strong>" + esc(c.encouragement_de || "") + "</strong></p></div>";
+    '<p class="muted">' + esc(c.language_summary || "—") + '</p><p><strong>' + esc(c.encouragement_de || "") + "</strong>" +
+    (c.encouragement_de ? ' <button class="speak small" data-speak="' + esc(c.encouragement_de) + '">🔊 听德语鼓励</button>' : "") + "</p></div>";
 }
 
 async function showMetrics() {

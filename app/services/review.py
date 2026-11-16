@@ -270,7 +270,7 @@ def update_profile(conn, tenant_id: str, bundle: dict[str, Any]) -> None:
             })
 
 
-def student_export(conn, tenant_id: str, run_id: str, fmt: str = "json") -> tuple[str, str]:
+def student_export(conn, tenant_id: str, run_id: str, fmt: str = "json", nonce: str = "") -> tuple[str, str]:
     bundle = _bundle(conn, tenant_id, run_id)
     errors = [e for e in bundle["errors"] if e.get("effective")]
     comments = json.loads(bundle["run"]["comments"] or "{}")
@@ -289,15 +289,38 @@ def student_export(conn, tenant_id: str, run_id: str, fmt: str = "json") -> tupl
     if fmt == "json":
         return json.dumps(data, ensure_ascii=False, indent=2), "application/json; charset=utf-8"
     rows = "".join(
-        f"<tr><td>{html.escape(e['original'])}</td><td>{html.escape(e['corrected'])}</td><td>{html.escape(e['type'])}</td><td>{html.escape(e['rule'])}</td></tr>"
+        f"<tr><td>{html.escape(e['original'])}</td>"
+        f"<td>{html.escape(e['corrected'])} "
+        f"<button class=\"speak\" data-speak=\"{html.escape(e['corrected'], quote=True)}\" aria-label=\"朗读正确表达\">🔊</button></td>"
+        f"<td>{html.escape(e['type'])}</td><td>{html.escape(e['rule'])}</td></tr>"
         for e in data["errors"]
     )
+    all_corrected = " ".join(e["corrected"] for e in data["errors"])
+    nonce_attr = f' nonce="{html.escape(nonce, quote=True)}"' if nonce else ""
+    inline_script = ""
+    if nonce:
+        inline_script = (
+            "<script" + nonce_attr + ">"
+            "(function(){if(window.DGReader)return;"
+            "var s=window.speechSynthesis;"
+            "function v(){var a=s&&s.getVoices?s.getVoices():[];for(var i=0;i<a.length;i++){if(/^de([-_]|$)/i.test(a[i].lang||''))return a[i]}return null}"
+            "function speak(t,b){t=String(t||'').replace(/\\[(NAME|CLASS|SCHOOL)\\]/g,'').trim();if(!t)return;"
+            "if(!s||typeof SpeechSynthesisUtterance==='undefined'){alert('当前浏览器不支持语音朗读');return}"
+            "s.cancel();var u=new SpeechSynthesisUtterance(t);u.lang='de-DE';u.rate=.88;var g=v();if(g)u.voice=g;"
+            "if(b){b.classList.add('speaking');b.setAttribute('aria-pressed','true')}u.onend=function(){if(b){b.classList.remove('speaking');b.setAttribute('aria-pressed','false')}};s.speak(u);return true}"
+            "document.addEventListener('click',function(e){var b=e.target.closest('[data-speak]');if(!b)return;e.preventDefault();speak(b.getAttribute('data-speak'),b)});"
+            "window.DGReader={speak:function(t){return speak(t,null)}};})();"
+            "</script>"
+        )
     page = f"""<!doctype html><html lang="zh"><meta charset="utf-8">
 <title>作文批改反馈</title>
-<style>body{{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;line-height:1.7;color:#222}}table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}}h1{{font-size:22px}}</style>
+<style>body{{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;line-height:1.7;color:#222}}table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}}h1{{font-size:22px}}.speak{{border:0;background:#e5f1ec;color:#145c4c;border-radius:99px;cursor:pointer;padding:2px 8px}}.speak.speaking{{background:#145c4c;color:#fff}}</style>
 <h1>{html.escape(data['task'])} · {html.escape(pseudonym)}</h1>
-<h2>修改清单</h2><table><thead><tr><th>原文</th><th>修改</th><th>类型</th><th>依据</th></tr></thead><tbody>{rows}</tbody></table>
+<h2>修改清单</h2>
+{f'<p><button class="speak" data-speak="{html.escape(all_corrected, quote=True)}">🔊 朗读全部正确表达</button></p>' if all_corrected else ''}
+<table><thead><tr><th>原文</th><th>修改</th><th>类型</th><th>依据</th></tr></thead><tbody>{rows}</tbody></table>
 <h2>评语</h2><p>{html.escape(data['comments']['content_comment'])}</p><p>{html.escape(data['comments']['structure_comment'])}</p><p>{html.escape(data['comments']['language_summary'])}</p>
-<p><strong>{html.escape(data['comments']['encouragement_de'])}</strong></p>
+<p><strong>{html.escape(data['comments']['encouragement_de'])}</strong> <button class="speak" data-speak="{html.escape(data['comments']['encouragement_de'], quote=True)}">🔊 听德语鼓励</button></p>
+{inline_script}
 </html>"""
     return page, "text/html; charset=utf-8"

@@ -579,7 +579,10 @@ def export(submission_id: str, request: Request, format: str = "html", user: dic
         run = _latest_run(conn, user["tenant_id"], submission_id)
         if not run:
             raise HTTPException(status_code=404, detail="run not found")
-        body, media = student_export(conn, user["tenant_id"], run["id"], format)
+        body, media = student_export(
+            conn, user["tenant_id"], run["id"], format,
+            nonce=getattr(request.state, "csp_nonce", ""),
+        )
         return Response(content=body, media_type=media)
     finally:
         conn.close()

@@ -32,6 +32,16 @@ def test_teacher_flow_and_csrf(client):
     assert "comments" in payload and "errors" in payload
 
 
+def test_student_export_has_pronunciation_controls(client):
+    login(client)
+    ready = next(item for item in client.get("/api/submissions").json() if item["status"] == "ready_for_review")
+    response = client.get("/api/submissions/" + ready["id"] + "/export?format=html")
+    assert response.status_code == 200
+    assert "data-speak" in response.text
+    assert "speechSynthesis" in response.text
+    assert "nonce-" in response.headers.get("content-security-policy", "")
+
+
 def test_confirm_endpoint_queues_grading(client):
     user = login(client)
     headers = {"x-csrf-token": user["csrf"]}

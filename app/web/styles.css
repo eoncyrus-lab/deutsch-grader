@@ -83,6 +83,10 @@ p { margin: 8px 0; }
 .error-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 6px 0; }
 .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 .transcript { font-size: 15px; line-height: 2; white-space: pre-wrap; }
+.sentence-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.sentence-row:last-child { border-bottom: 0; }
+.speak { white-space: nowrap; }
+.speak.speaking { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .checklist { width: 100%; border-collapse: collapse; }
 .checklist td, .checklist th { border-bottom: 1px solid var(--line); padding: 7px 6px; text-align: left; vertical-align: top; }
 .checklist th { font-size: 12px; color: var(--muted); font-weight: 600; }
