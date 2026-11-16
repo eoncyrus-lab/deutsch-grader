@@ -144,18 +144,29 @@ async function openSubmission(id) {
 async function showCreate() {
   try {
     var students = await api("/api/students");
+    var configs = await api("/api/configs");
+    var taskConfigId = configs.length ? configs[0].id : "";
     var options = students.map(function (s) {
       return '<option value="' + esc(s.id) + '">' + esc(s.pseudonym) + " · " + esc(s.class_code || "") + (s.active_consents ? "" : " · 无同意") + "</option>";
     }).join("");
-    $("#content").innerHTML = '<div class="page-head"><div><h1>新建作文批改</h1><div class="meta muted small">输入转写稿，确认后进入队列；教师端仍可逐条审核。</div></div></div>' +
+    $("#content").innerHTML = '<div class="page-head"><div><h1>新建作文批改</h1><div class="meta muted small">输入转写稿或上传手写照片；教师端仍可逐条审核。</div></div></div>' +
       '<div class="card"><form id="create-form">' +
       '<label>学生<select name="student_id">' + options + "</select></label>" +
       '<label>标题<input name="title" placeholder="例如 Meine beste Reise"></label>' +
       '<label>作文文本（保留学生原有拼写和错误）<textarea name="text" rows="12" required placeholder="Meine beste Reise war im Sommer ..."></textarea></label>' +
       '<div class="actions"><button class="primary" type="submit">提交并批改</button><button type="button" id="cancel-create">取消</button></div>' +
-      '<p class="muted small" id="create-status"></p></form></div>';
+      '<p class="muted small" id="create-status"></p></form></div>' +
+      '<div class="card"><div class="card-head"><h2>拍照作文</h2><span class="pill warn">先脱敏，再转写</span></div>' +
+      '<div class="mode-note">上传原始照片后，系统不会直接把它们发给模型。你需要为每张照片上传一张遮住姓名/班级/学校区域的副本，确认后才会转写。</div>' +
+      '<form id="image-form">' +
+      '<label>学生<select name="student_id">' + options + "</select></label>" +
+      '<label>原始照片（可多选）<input name="files" type="file" accept="image/jpeg,image/png,image/webp" multiple required></label>' +
+      '<input name="task_config_id" type="hidden" value="' + esc(taskConfigId) + '">' +
+      '<div class="actions"><button class="primary" type="submit">上传照片</button></div>' +
+      '<p class="muted small" id="image-status"></p></form></div>';
     $("#cancel-create").addEventListener("click", function () { if (state.current) renderDetail(state.current); else loadSubmissions(); });
     $("#create-form").addEventListener("submit", submitCreate);
+    $("#image-form").addEventListener("submit", submitImageCreate);
   } catch (error) {
     toast(error.message, true);
   }
@@ -184,13 +195,105 @@ async function submitCreate(event) {
   }
 }
 
-async function pollSubmission(id) {
+async function submitImageCreate(event) {
+  event.preventDefault();
+  var form = new FormData(event.target);
+  var files = form.getAll("files").filter(function (file) { return file && file.size; });
+  var status = $("#image-status");
+  if (!files.length) {
+    toast("请选择至少一张照片", true);
+    return;
+  }
+  if (!form.get("task_config_id")) {
+    toast("没有可用题型配置，请先初始化", true);
+    return;
+  }
+  status.textContent = "上传中…";
+  var body = new FormData();
+  body.append("student_id", form.get("student_id"));
+  body.append("task_config_id", form.get("task_config_id"));
+  files.forEach(function (file) { body.append("files", file); });
+  try {
+    var created = await api("/api/submissions", { method: "POST", body: body });
+    toast("照片已加密上传");
+    await loadImageSetup(created.submission_id);
+  } catch (error) {
+    status.textContent = "";
+    toast(error.message, true);
+  }
+}
+
+async function loadImageSetup(submissionId) {
+  try {
+    var detail = await api("/api/submissions/" + submissionId);
+    state.current = detail;
+    await loadSubmissions();
+    var images = (detail.images || []).filter(function (image) { return !image.deleted_at; });
+    var rows = images.map(function (image) {
+      var safe = image.redacted_at ? '<span class="pill">已脱敏</span>' :
+        '<div><input type="file" accept="image/jpeg,image/png,image/webp" data-file="' + esc(image.id) + '">' +
+        '<div class="actions"><button class="small" data-redact="' + esc(image.id) + '">上传脱敏副本</button></div></div>';
+      return '<div class="image-row"><div><img class="thumb" src="/api/submissions/' + esc(submissionId) + '/images/' + esc(image.id) + '" alt="作文照片"></div>' +
+        '<div><strong>' + esc(image.content_type) + "</strong><div class=\"hint\">" + Math.round(image.bytes / 1024) + ' KB</div>' + safe + "</div></div>";
+    }).join("");
+    var allRedacted = images.length > 0 && images.every(function (image) { return !!image.redacted_at; });
+    var action = allRedacted ? '<div class="actions"><button class="primary" id="transcribe-btn">开始转写</button></div>' :
+      '<p class="muted small">每张照片都上传脱敏副本后，才能开始转写。</p>';
+    $("#content").innerHTML = pageHead(detail) +
+      '<div class="card"><div class="card-head"><h2>照片与脱敏</h2><span class="pill muted">' + images.length + ' 张</span></div>' +
+      (rows || '<p class="muted">还没有照片。</p>') + action + "</div>";
+    bindProfile(detail);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-redact]"), function (button) {
+      button.addEventListener("click", function () {
+        var imageId = button.dataset.redact;
+        var input = document.querySelector('input[data-file="' + imageId + '"]');
+        uploadRedacted(submissionId, imageId, input && input.files ? input.files[0] : null);
+      });
+    });
+    var transcribe = $("#transcribe-btn");
+    if (transcribe) transcribe.addEventListener("click", function () { startTranscription(submissionId); });
+    if (detail.submission.status === "transcribing") {
+      pollSubmission(submissionId, ["awaiting_confirmation", "needs_manual"]);
+    }
+  } catch (error) {
+    toast(error.message, true);
+  }
+}
+
+async function uploadRedacted(submissionId, imageId, file) {
+  if (!file) {
+    toast("请选择遮住姓名的图片", true);
+    return;
+  }
+  var body = new FormData();
+  body.append("file", file);
+  try {
+    await api("/api/submissions/" + submissionId + "/images/" + imageId + "/redacted-copy", { method: "POST", body: body });
+    toast("脱敏副本已上传");
+    await loadImageSetup(submissionId);
+  } catch (error) {
+    toast(error.message, true);
+  }
+}
+
+async function startTranscription(submissionId) {
+  try {
+    await api("/api/submissions/" + submissionId + "/transcribe", { method: "POST" });
+    toast("已开始转写");
+    await pollSubmission(submissionId, ["awaiting_confirmation", "needs_manual"]);
+  } catch (error) {
+    toast(error.message, true);
+  }
+}
+
+async function pollSubmission(id, targets) {
+  targets = targets || ["ready_for_review", "needs_manual", "finalized"];
   for (var i = 0; i < 45; i++) {
     var detail = await api("/api/submissions/" + id);
     state.current = detail;
     renderDetail(detail);
-    if (["ready_for_review", "needs_manual", "finalized"].indexOf(detail.submission.status) >= 0) {
-      toast("批改完成，可以审核了");
+    if (targets.indexOf(detail.submission.status) >= 0) {
+      toast(detail.submission.status === "awaiting_confirmation" ? "转写完成，请确认" : "批改完成，可以审核了");
       await loadSubmissions();
       return;
     }
