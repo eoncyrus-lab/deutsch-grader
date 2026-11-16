@@ -79,6 +79,26 @@ def test_students_endpoint_and_text_submission_queue(client):
     assert detail["run"]["status"] == "pending"
 
 
+def test_file_upload_extracts_text_and_queues(client):
+    user = login(client)
+    headers = {"x-csrf-token": user["csrf"]}
+    students = client.get("/api/students").json()
+    config_id = client.get("/api/configs").json()[0]["id"]
+    text = "Meine beste Reise war im Sommer.\\nIch war mit meiner Familie am Strand."
+    response = client.post(
+        "/api/submissions/file",
+        data={"student_id": students[0]["id"], "task_config_id": config_id, "title": "Meine Reise"},
+        files={"file": ("essay.txt", text.encode("utf-8"), "text/plain")},
+        headers=headers,
+    )
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    detail = client.get("/api/submissions/" + payload["submission_id"]).json()
+    assert detail["submission"]["status"] == "queued"
+    assert detail["files"][0]["filename"] == "essay.txt"
+    assert "Meine beste Reise" in detail["transcript"]["lines"][0]["text"]
+
+
 def test_roles_and_cross_tenant(client):
     teacher = login(client)
     real_id = client.get("/api/submissions").json()[0]["id"]

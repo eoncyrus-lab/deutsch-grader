@@ -189,6 +189,20 @@ CREATE TABLE IF NOT EXISTS submission_image (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS submission_file (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES tenant(id),
+  submission_id TEXT NOT NULL REFERENCES submission(id),
+  object_key TEXT NOT NULL,
+  sha256 TEXT NOT NULL,
+  filename TEXT NOT NULL,
+  content_type TEXT NOT NULL,
+  bytes INTEGER NOT NULL,
+  extracted_chars INTEGER NOT NULL DEFAULT 0,
+  deleted_at TEXT,
+  created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS transcript (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenant(id),
@@ -399,6 +413,7 @@ CREATE TABLE IF NOT EXISTS app_meta (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_submission_tenant_id ON submission(tenant_id, id);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_submission_file_tenant_id ON submission_file(tenant_id, id);
 CREATE UNIQUE INDEX IF NOT EXISTS ux_run_tenant_id ON run(tenant_id, id);
 CREATE UNIQUE INDEX IF NOT EXISTS ux_transcript_tenant_id ON transcript(tenant_id, id);
 CREATE UNIQUE INDEX IF NOT EXISTS ux_stage_output_tenant_id ON stage_output(tenant_id, id);

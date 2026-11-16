@@ -23,6 +23,7 @@ from app.services.review import (
 )
 from app.settings import settings
 from app.storage import ObjectStore, StorageError
+from app.file_ingest import FileIngestError, MAX_FILE_BYTES, extract_text
 from app.grading.validation import SchemaError
 from app.grading.text import word_count
 
@@ -291,6 +292,11 @@ def submission_detail(submission_id: str, request: Request, user: dict = Depends
                     "total": score["total"], "trace": json.loads(score["trace"]), "draft": bool(score["draft"]),
                 }
         images = db.fetch_all(conn, "SELECT id, content_type, bytes, redacted_at, deleted_at FROM submission_image WHERE tenant_id = ? AND submission_id = ?", (user["tenant_id"], submission_id))
+        files = db.fetch_all(
+            conn,
+            "SELECT id, filename, content_type, bytes, extracted_chars, deleted_at FROM submission_file WHERE tenant_id = ? AND submission_id = ?",
+            (user["tenant_id"], submission_id),
+        )
         comments = json.loads(run["comments"]) if run and run["comments"] else {}
         return {
             "submission": {
@@ -316,6 +322,7 @@ def submission_detail(submission_id: str, request: Request, user: dict = Depends
             "scores": score_map,
             "comments": comments,
             "images": images,
+            "files": files,
             "can_confirm": submission["status"] == "awaiting_confirmation",
         }
     finally:
@@ -417,6 +424,63 @@ async def upload_submission(
             })
         audit(conn, user["tenant_id"], user["id"], "submission.upload", "submission", submission_id, {"files": len(files)})
         return {"submission_id": submission_id, "status": "uploaded", "next": "mark redacted copies, then transcribe"}
+    finally:
+        conn.close()
+
+
+@router.post("/submissions/file")
+async def upload_text_file(
+    request: Request,
+    student_id: str = Form(...),
+    task_config_id: str = Form(...),
+    title: str = Form(""),
+    file: UploadFile = File(...),
+    user: dict = Depends(_user),
+) -> dict:
+    _mutate(request, user)
+    require_role(user, "teacher", "rubric_owner", "admin")
+    conn = db.connect()
+    try:
+        student = db.fetch_one(conn, "SELECT * FROM student WHERE id = ? AND tenant_id = ?", (student_id, user["tenant_id"]))
+        if not student:
+            raise HTTPException(status_code=404, detail="student not found")
+        data = await file.read()
+        if len(data) > MAX_FILE_BYTES:
+            raise HTTPException(status_code=413, detail="file too large")
+        try:
+            text = extract_text(file.filename or "upload", data)
+        except FileIngestError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        lines = [{"text": line.strip()} for line in text.splitlines() if line.strip()]
+        if not lines:
+            raise HTTPException(status_code=400, detail="no text lines extracted")
+        submission_id = db.new_id()
+        now = db.utcnow()
+        db.insert(conn, "submission", {
+            "id": submission_id, "tenant_id": user["tenant_id"], "assignment_id": None,
+            "student_id": student_id, "task_config_id": task_config_id, "status": "queued",
+            "source": "file", "created_by": user["id"], "created_at": now, "updated_at": now,
+        })
+        store = ObjectStore(root=db.settings.storage_dir)
+        stored = store.put(user["tenant_id"], data, file.content_type or "application/octet-stream")
+        db.insert(conn, "submission_file", {
+            "id": db.new_id(), "tenant_id": user["tenant_id"], "submission_id": submission_id,
+            "object_key": stored["object_key"], "sha256": stored["sha256"],
+            "filename": file.filename or "upload",
+            "content_type": file.content_type or "application/octet-stream",
+            "bytes": stored["bytes"], "extracted_chars": len(text), "deleted_at": None, "created_at": now,
+        })
+        run_id, sentences = confirm_and_queue(
+            submission_id, user["tenant_id"], user["id"], title or None, lines,
+        )
+        audit(conn, user["tenant_id"], user["id"], "submission.file", "submission", submission_id, {
+            "filename": file.filename or "upload", "chars": len(text),
+        })
+        return {
+            "submission_id": submission_id, "run_id": run_id,
+            "filename": file.filename or "upload", "extracted_chars": len(text),
+            "sentences": sentences,
+        }
     finally:
         conn.close()
 

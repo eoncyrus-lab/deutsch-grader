@@ -23,12 +23,21 @@ def purge_expired(conn, tenant_id: str, image_days: int = 120, stage_days: int =
     for image in images:
         store.delete(tenant_id, image["object_key"])
         conn.execute("UPDATE submission_image SET deleted_at = ? WHERE id = ? AND tenant_id = ?", (db.utcnow(), image["id"], tenant_id))
+    files = db.fetch_all(
+        conn,
+        "SELECT f.* FROM submission_file f JOIN transcript t ON t.submission_id = f.submission_id "
+        "WHERE f.tenant_id = ? AND f.deleted_at IS NULL AND t.confirmed_at IS NOT NULL AND t.confirmed_at < ?",
+        (tenant_id, _cutoff(image_days)),
+    )
+    for item in files:
+        store.delete(tenant_id, item["object_key"])
+        conn.execute("UPDATE submission_file SET deleted_at = ? WHERE id = ? AND tenant_id = ?", (db.utcnow(), item["id"], tenant_id))
     conn.execute(
         "UPDATE stage_output SET output = NULL WHERE tenant_id = ? AND created_at < ? AND output IS NOT NULL",
         (tenant_id, _cutoff(stage_days)),
     )
-    audit(conn, tenant_id, "retention", "retention.purge", "tenant", tenant_id, {"images": len(images), "stage_days": stage_days})
-    return {"images_deleted": len(images)}
+    audit(conn, tenant_id, "retention", "retention.purge", "tenant", tenant_id, {"images": len(images), "files": len(files), "stage_days": stage_days})
+    return {"images_deleted": len(images), "files_deleted": len(files)}
 
 
 def revoke_consent(conn, tenant_id: str, student_id: str, actor: str) -> None:

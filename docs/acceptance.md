@@ -9,7 +9,7 @@ node --check app/web/app.js
 .venv/bin/pytest -q
 ~~~
 
-结果：44 个测试全部通过；Python 编译和前端语法检查通过。
+结果：47 个测试全部通过；Python 编译和前端语法检查通过。
 
 覆盖范围：
 

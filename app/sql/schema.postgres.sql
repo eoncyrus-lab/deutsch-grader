@@ -195,6 +195,22 @@ CREATE TABLE submission_image (
   FOREIGN KEY (tenant_id, submission_id) REFERENCES submission(tenant_id, id)
 );
 
+CREATE TABLE submission_file (
+  id TEXT NOT NULL,
+  tenant_id TEXT NOT NULL,
+  submission_id TEXT NOT NULL,
+  object_key TEXT NOT NULL,
+  sha256 TEXT NOT NULL,
+  filename TEXT NOT NULL,
+  content_type TEXT NOT NULL,
+  bytes INT NOT NULL,
+  extracted_chars INT NOT NULL DEFAULT 0,
+  deleted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_id, id),
+  FOREIGN KEY (tenant_id, submission_id) REFERENCES submission(tenant_id, id)
+);
+
 CREATE TABLE transcript (
   id TEXT NOT NULL,
   tenant_id TEXT NOT NULL,

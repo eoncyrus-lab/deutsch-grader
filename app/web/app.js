@@ -153,20 +153,21 @@ async function showCreate() {
     var options = students.map(function (s) {
       return '<option value="' + esc(s.id) + '">' + esc(s.pseudonym) + " · " + esc(s.class_code || "") + (s.active_consents ? "" : " · 无同意") + "</option>";
     }).join("");
-    $("#content").innerHTML = '<div class="page-head"><div><h1>新建作文批改</h1><div class="meta muted small">输入转写稿或上传手写照片；教师端仍可逐条审核。</div></div></div>' +
+    $("#content").innerHTML = '<div class="page-head"><div><h1>新建作文批改</h1><div class="meta muted small">输入转写稿，或上传图片、PDF、Word、TXT；教师端仍可逐条审核。</div></div></div>' +
       '<div class="card"><form id="create-form">' +
       '<label>学生<select name="student_id">' + options + "</select></label>" +
       '<label>标题<input name="title" placeholder="例如 Meine beste Reise"></label>' +
       '<label>作文文本（保留学生原有拼写和错误）<textarea name="text" rows="12" required placeholder="Meine beste Reise war im Sommer ..."></textarea></label>' +
       '<div class="actions"><button class="primary" type="submit">提交并批改</button><button type="button" id="cancel-create">取消</button></div>' +
       '<p class="muted small" id="create-status"></p></form></div>' +
-      '<div class="card"><div class="card-head"><h2>拍照作文</h2><span class="pill warn">先脱敏，再转写</span></div>' +
-      '<div class="mode-note">上传原始照片后，系统不会直接把它们发给模型。你需要为每张照片上传一张遮住姓名/班级/学校区域的副本，确认后才会转写。</div>' +
+      '<div class="card"><div class="card-head"><h2>上传作业</h2><span class="pill warn">图片 / PDF / Word / TXT</span></div>' +
+      '<div class="mode-note">图片：先上传遮住姓名区域的副本，再转写。PDF / Word / TXT：提取文字后直接进入批改。文档一次一个；图片可以多选。</div>' +
       '<form id="image-form">' +
       '<label>学生<select name="student_id">' + options + "</select></label>" +
-      '<label>原始照片（可多选）<input name="files" type="file" accept="image/jpeg,image/png,image/webp" multiple required></label>' +
+      '<label>标题（可选，文档批改时使用）<input name="title" placeholder="例如 Meine beste Reise"></label>' +
+      '<label>作业文件（图片可多选；文档一次一个）<input name="files" type="file" accept="image/jpeg,image/png,image/webp,.pdf,.docx,.txt,.md" multiple required></label>' +
       '<input name="task_config_id" type="hidden" value="' + esc(taskConfigId) + '">' +
-      '<div class="actions"><button class="primary" type="submit">上传照片</button></div>' +
+      '<div class="actions"><button class="primary" type="submit">上传作业</button></div>' +
       '<p class="muted small" id="image-status"></p></form></div>';
     $("#cancel-create").addEventListener("click", function () { if (state.current) renderDetail(state.current); else loadSubmissions(); });
     $("#create-form").addEventListener("submit", submitCreate);
@@ -213,6 +214,31 @@ async function submitImageCreate(event) {
     return;
   }
   status.textContent = "上传中…";
+  var documents = files.filter(function (file) {
+    return !/^image\//.test(file.type || "") && !/\.(jpe?g|png|webp)$/i.test(file.name || "");
+  });
+  if (documents.length) {
+    if (files.length !== 1) {
+      status.textContent = "";
+      toast("文档一次只上传一个；图片可以多选", true);
+      return;
+    }
+    var docBody = new FormData();
+    docBody.append("student_id", form.get("student_id"));
+    docBody.append("task_config_id", form.get("task_config_id"));
+    docBody.append("title", form.get("title") || "");
+    docBody.append("file", documents[0]);
+    try {
+      var imported = await api("/api/submissions/file", { method: "POST", body: docBody });
+      status.textContent = "已提取 " + imported.extracted_chars + " 字，进入批改队列…";
+      await loadSubmissions();
+      await pollSubmission(imported.submission_id);
+    } catch (error) {
+      status.textContent = "";
+      toast(error.message, true);
+    }
+    return;
+  }
   var body = new FormData();
   body.append("student_id", form.get("student_id"));
   body.append("task_config_id", form.get("task_config_id"));
@@ -397,8 +423,11 @@ function transcriptCard(d) {
       '</span><button class="speak small" data-speak="' + esc(sentence.text) + '" title="朗读这句德语">🔊</button></div>';
   }).join("");
   var actions = all ? '<div class="actions"><button class="speak small" data-speak="' + esc(all) + '">🔊 朗读全文</button></div>' : "";
+  var fileInfo = (d.files || []).filter(function (file) { return !file.deleted_at; }).map(function (file) {
+    return '<span class="pill muted">' + esc(file.filename) + "</span>";
+  }).join(" ");
   return '<details class="card"><summary><strong>转写稿</strong> <span class="muted small">版本 ' + d.transcript.version + " · " + d.word_count + " 词</span></summary>" +
-    actions + (rows || '<div class="transcript">' + esc(body) + "</div>") + "</details>";
+    (fileInfo ? '<div class="meta">' + fileInfo + "</div>" : "") + actions + (rows || '<div class="transcript">' + esc(body) + "</div>") + "</details>";
 }
 
 function errorsCard(d) {
