@@ -36,6 +36,16 @@ For a file:
 python scripts/grade.py --file essay.txt --student S-001
 ~~~
 
+To turn an already graded submission into a standalone page:
+
+~~~bash
+python scripts/grade.py \
+  --submission-id SUBMISSION_ID \
+  --html graded-report.html
+~~~
+
+The HTML is self-contained and uses no external assets. It includes the AI draft score, reviewed/final scores when present, confirmed errors, suggestions, checklist status, and teacher comments. Return the absolute HTML path to the user. The page is a review artifact, not a final report card.
+
 ## Report
 
 After the script returns:
@@ -44,6 +54,7 @@ After the script returns:
 2. List only effective confirmed errors with original, corrected, type, and rule.
 3. Mention unresolved checklist items or a needs_manual status.
 4. Tell the user a teacher must review and finalize before the result is used for a grade.
+5. If an HTML path was written, give the path and say it is a standalone review page.
 
 If the status is needs_manual, report run.error and the next step. Do not present a partial score as complete.
 

@@ -50,6 +50,26 @@ python .agents/skills/deutsch-grader/scripts/grade.py \
 4. 轮询到 ready_for_review、finalized 或 needs_manual；
 5. 输出 AI 分数、有效错误、未解决要素和评语。
 
+## 生成独立批改页面
+
+脚本可以把结果渲染成一个单独的 HTML 页面，不依赖前端服务：
+
+~~~bash
+python ~/.agents/skills/deutsch-grader/scripts/grade.py \
+  --submission-id 你的提交ID \
+  --html ~/Downloads/graded-report.html
+~~~
+
+页面包含：
+
+- AI 草稿、教师复核、最终成绩三组分数；
+- 确定错误和建议核对错误；
+- 要素核对状态；
+- 中文评语和德语鼓励语；
+- 教师终审提醒。
+
+页面是审核材料，不是最终成绩单；正式成绩仍以教师终审为准。
+
 ## 在 Cindy 对话里怎么用
 
 可以直接说：

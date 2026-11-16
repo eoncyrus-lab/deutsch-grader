@@ -145,6 +145,7 @@ python -m eval.gate reports/eval.json --release
 ## Cindy Skill
 
 项目内提供一个 Cindy Skill，用来从对话里调用已部署的批改服务：提交文本、轮询状态、汇总分数和错误。
+也可以传入 --submission-id 和 --html，把已有批改结果渲染成独立 HTML 页面。
 
 安装到本机 Cindy 的共享 Skill 目录：
 
